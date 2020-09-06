@@ -13,6 +13,7 @@ public:
     virtual void LeaveStandby() {}
 
 private:
-    EmuTrackerDriver *m_pTracker = nullptr;
+    EmuTrackerDriver *m_pTracker_foot_left = nullptr;
+    EmuTrackerDriver* m_pTracker_foot_right = nullptr;
 
 };
