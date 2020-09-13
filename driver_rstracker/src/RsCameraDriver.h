@@ -1,9 +1,9 @@
 #include <openvr_driver.h>
 
-class EmuTrackerDriver : public vr::ITrackedDeviceServerDriver
+class RsCameraDriver : public vr::ITrackedDeviceServerDriver
 {
 public:
-    EmuTrackerDriver();
+    RsCameraDriver();
     virtual vr::EVRInitError Activate(vr::TrackedDeviceIndex_t unObjectId) override;
     virtual void Deactivate() override;
     virtual void EnterStandby() override;
@@ -11,9 +11,9 @@ public:
     virtual void DebugRequest(const char* pchRequest, char* pchResponseBuffer, uint32_t unResponseBufferSize) override;
     virtual vr::DriverPose_t GetPose() override;
 
-
     void RunFrame();
     void Cleanup();
+
 
     std::string GetSerialNumber();
 private:

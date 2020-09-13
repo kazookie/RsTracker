@@ -1,0 +1,11 @@
+{
+	"alwaysActivate": true,
+	"name" : "emutracker",
+	"directory" : "",
+	"resourceOnly" : false,
+
+	"hmd_presence" :
+	[
+		"*.*"
+	]
+}

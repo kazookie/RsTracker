@@ -1,4 +1,4 @@
-# EmuTracker OpenVR Device Driver
+# RsTracker OpenVR Device Driver
 
 # Building
 

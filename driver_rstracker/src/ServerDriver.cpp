@@ -6,9 +6,11 @@ EVRInitError ServerDriver::Init(vr::IVRDriverContext* pDriverContext)
 {
     VR_INIT_SERVER_DRIVER_CONTEXT(pDriverContext);
     // InitDriverLog(vr::VRDriverLog());
-    TrackedDeviceClass_GenericTracker;
 
-    m_pTracker_foot_left = new EmuTrackerDriver();
+    m_pRsCamera = new RsCameraDriver();
+    vr::VRServerDriverHost()->TrackedDeviceAdded(m_pRsCamera->GetSerialNumber().c_str(), vr::TrackedDeviceClass_TrackingReference, m_pRsCamera);
+
+    m_pTracker_foot_left = new RsTrackerDriver();
     vr::VRServerDriverHost()->TrackedDeviceAdded(m_pTracker_foot_left->GetSerialNumber().c_str(), vr::TrackedDeviceClass_GenericTracker, m_pTracker_foot_left);
 
     //m_pTracker_foot_right = new EmuTrackerDriver();
@@ -19,6 +21,10 @@ EVRInitError ServerDriver::Init(vr::IVRDriverContext* pDriverContext)
 
 void ServerDriver::RunFrame()
 {
+    if (m_pRsCamera)
+    {
+        m_pRsCamera->RunFrame();
+    }
     if (m_pTracker_foot_left)
     {
         m_pTracker_foot_left->RunFrame();
@@ -31,6 +37,8 @@ void ServerDriver::RunFrame()
 
 void ServerDriver::Cleanup()
 {
+    delete m_pRsCamera;
+    m_pRsCamera = NULL;
     delete m_pTracker_foot_left;
     m_pTracker_foot_left = NULL;
     delete m_pTracker_foot_right;

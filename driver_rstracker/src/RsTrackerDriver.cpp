@@ -1,9 +1,9 @@
-#include "EmuTrackerDriver.h"
+#include "RsTrackerDriver.h"
 #include <Windows.h>
 
 using namespace vr;
 
-EmuTrackerDriver::EmuTrackerDriver()
+RsTrackerDriver::RsTrackerDriver()
 {
     m_unObjectId = vr::k_unTrackedDeviceIndexInvalid;
     m_ulPropertyContainer = vr::k_ulInvalidPropertyContainer;
@@ -12,40 +12,41 @@ EmuTrackerDriver::EmuTrackerDriver()
     m_sModelNumber = "EmuTracker";
 }
 
-vr::EVRInitError EmuTrackerDriver::Activate(vr::TrackedDeviceIndex_t unObjectId)
+vr::EVRInitError RsTrackerDriver::Activate(vr::TrackedDeviceIndex_t unObjectId)
 {
     m_unObjectId = unObjectId;
     m_ulPropertyContainer = vr::VRProperties()->TrackedDeviceToPropertyContainer(m_unObjectId);
 
-    vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, Prop_ModelNumber_String, m_sModelNumber.c_str());
+    vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, Prop_ModelNumber_String, "841512070493_Tracker_foot");
     vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, Prop_RenderModelName_String, m_sModelNumber.c_str());
 
     vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{emutracker}/rendermodels/vr_tracker_emu_1_0");
+    vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ControllerType_String, "Tracker_foot");
 
     return VRInitError_None;
 }
 
-void EmuTrackerDriver::Deactivate()
+void RsTrackerDriver::Deactivate()
 {
 
 }
 
-void EmuTrackerDriver::EnterStandby()
+void RsTrackerDriver::EnterStandby()
 {
 
 }
 
-void* EmuTrackerDriver::GetComponent(const char* pchComponentNameAndVersion)
+void* RsTrackerDriver::GetComponent(const char* pchComponentNameAndVersion)
 {
     return nullptr;
 }
 
-void EmuTrackerDriver::DebugRequest(const char* pchRequest, char* pchResponseBuffer, uint32_t unResponseBufferSize)
+void RsTrackerDriver::DebugRequest(const char* pchRequest, char* pchResponseBuffer, uint32_t unResponseBufferSize)
 {
 
 }
 
-vr::DriverPose_t EmuTrackerDriver::GetPose()
+vr::DriverPose_t RsTrackerDriver::GetPose()
 {
     HmdQuaternion_t quat;
     quat.w = 1;
@@ -94,19 +95,19 @@ vr::DriverPose_t EmuTrackerDriver::GetPose()
     return pose;
 }
 
-void EmuTrackerDriver::RunFrame()
+void RsTrackerDriver::RunFrame()
 {
     if (m_unObjectId != vr::k_unTrackedDeviceIndexInvalid) {
         vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_unObjectId, GetPose(), sizeof(DriverPose_t));
     }
 }
 
-void EmuTrackerDriver::Cleanup()
+void RsTrackerDriver::Cleanup()
 {
 
 }
 
-std::string EmuTrackerDriver::GetSerialNumber()
+std::string RsTrackerDriver::GetSerialNumber()
 {
-    return m_sSerialNumber;
+    return "841512070493_Tracker_foot";
 }

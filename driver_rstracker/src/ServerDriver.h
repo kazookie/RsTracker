@@ -1,5 +1,6 @@
 #include <openvr_driver.h>
-#include "EmuTrackerDriver.h"
+#include "RsCameraDriver.h"
+#include "RsTrackerDriver.h"
 
 class ServerDriver : public vr::IServerTrackedDeviceProvider
 {
@@ -13,7 +14,8 @@ public:
     virtual void LeaveStandby() {}
 
 private:
-    EmuTrackerDriver *m_pTracker_foot_left = nullptr;
-    EmuTrackerDriver* m_pTracker_foot_right = nullptr;
+    RsCameraDriver* m_pRsCamera = nullptr;
+    RsTrackerDriver *m_pTracker_foot_left = nullptr;
+    RsTrackerDriver* m_pTracker_foot_right = nullptr;
 
 };
