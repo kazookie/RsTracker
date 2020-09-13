@@ -20,7 +20,7 @@ vr::EVRInitError RsTrackerDriver::Activate(vr::TrackedDeviceIndex_t unObjectId)
     vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, Prop_ModelNumber_String, "841512070493_Tracker_foot");
     vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, Prop_RenderModelName_String, m_sModelNumber.c_str());
 
-    vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{emutracker}/rendermodels/vr_tracker_emu_1_0");
+    vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_RenderModelName_String, "{rstracker}/rendermodels/vr_tracker_emu_1_0");
     vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ControllerType_String, "Tracker_foot");
 
     return VRInitError_None;
