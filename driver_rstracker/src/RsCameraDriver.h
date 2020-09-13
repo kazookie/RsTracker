@@ -1,4 +1,8 @@
 #include <openvr_driver.h>
+#include <librealsense2/rs.hpp>
+
+#include <cubemos/engine.h>
+#include <cubemos/skeleton_tracking.h>
 
 class RsCameraDriver : public vr::ITrackedDeviceServerDriver
 {
@@ -24,4 +28,8 @@ private:
     std::string m_sModelNumber;
 
     double cpX = 0, cpY = 0, cpZ = 0;
+
+    rs2::pipeline pipe;
+    rs2::config cfg;
+    rs2::context ctx;
 };

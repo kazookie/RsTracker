@@ -1,6 +1,3 @@
 [submodule "lib/openvr"]
 	path = lib/openvr
 	url = https://github.com/ValveSoftware/openvr.git
-[submodule "lib/librealsense"]
-	path = lib/librealsense
-	url = https://github.com/IntelRealSense/librealsense.git
