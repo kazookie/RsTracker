@@ -21,6 +21,9 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <BuildMacro Include="opencvSDK">
+      <Value>$(opencvSDK)</Value>
+    </BuildMacro>
     <BuildMacro Include="openvrSDK">
       <Value>$(openvrSDK)</Value>
     </BuildMacro>
