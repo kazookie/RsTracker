@@ -5,7 +5,7 @@ using namespace vr;
 EVRInitError ServerDriver::Init(vr::IVRDriverContext* pDriverContext)
 {
     VR_INIT_SERVER_DRIVER_CONTEXT(pDriverContext);
-    // InitDriverLog(vr::VRDriverLog());
+    InitDriverLog(vr::VRDriverLog());
 
     m_pRsCamera = new RsCameraDriver();
     vr::VRServerDriverHost()->TrackedDeviceAdded(m_pRsCamera->GetSerialNumber().c_str(), vr::TrackedDeviceClass_TrackingReference, m_pRsCamera);
@@ -37,6 +37,7 @@ void ServerDriver::RunFrame()
 
 void ServerDriver::Cleanup()
 {
+    CleanupDriverLog();
     delete m_pRsCamera;
     m_pRsCamera = NULL;
     delete m_pTracker_foot_left;

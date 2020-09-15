@@ -1,4 +1,5 @@
 #include <openvr_driver.h>
+#include "driverlog.h"
 
 #include <opencv2/core.hpp>
 
@@ -9,6 +10,46 @@
 #include <cubemos/skeleton_tracking.h>
 
 using CUBEMOS_SKEL_Buffer_Ptr = std::unique_ptr<CM_SKEL_Buffer, void (*)(CM_SKEL_Buffer*)>;
+
+CUBEMOS_SKEL_Buffer_Ptr create_skel_buffer()
+{
+    return CUBEMOS_SKEL_Buffer_Ptr(new CM_SKEL_Buffer(), [](CM_SKEL_Buffer* pb) {
+        cm_skel_release_buffer(pb);
+        delete pb;
+    });
+}
+
+static std::string get_localdata_path()
+{
+    const int size = 256;
+    char buf[size] = "";
+    size_t requiredSize;
+
+    getenv_s(&requiredSize, buf, size, "LOCALAPPDATA");
+    return std::string(buf);
+}
+
+static std::string default_log_dir()
+{
+    std::string cubemosLogDir = "";
+    cubemosLogDir = get_localdata_path() + "\\Cubemos\\SkeletonTracking\\logs";
+    return cubemosLogDir;
+}
+
+static std::string default_license_dir()
+{
+    std::string cubemosLicenseDir = "";
+    cubemosLicenseDir = get_localdata_path() + "\\Cubemos\\SkeletonTracking\\license";
+    return cubemosLicenseDir;
+}
+
+static std::string default_model_dir()
+{
+    std::string cubemosModelDir = "";
+    cubemosModelDir = get_localdata_path() + "\\Cubemos\\SkeletonTracking\\models";
+    return cubemosModelDir;
+}
+
 
 struct cmPoint {
     float color_pixel[2];
@@ -48,14 +89,16 @@ private:
     rs2::config cfg;
     rs2::context ctx;
     rs2::pipeline_profile profile;
+    rs2::device sensor;
+
+    // Cubemos
+    CM_SKEL_Handle* handle = nullptr;   // set up the cubemos skeleton tracking api pipeline
 
     cv::Mat capturedFrame;
-
     const int nHeight = 192; // height of the image with which the DNN model will run inference
-    CM_Image imageLast;
-    //CUBEMOS_SKEL_Buffer_Ptr skeletonsPresent;
-    //CUBEMOS_SKEL_Buffer_Ptr skeletonsLast;
+
+    CUBEMOS_SKEL_Buffer_Ptr skeletonsPresent;
+    CUBEMOS_SKEL_Buffer_Ptr skeletonsLast;
 
     void SetupRealsense();
-    CUBEMOS_SKEL_Buffer_Ptr create_skel_buffer();
 };
