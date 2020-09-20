@@ -1,7 +1,6 @@
 #include "RsCameraDriver.h"
 #include <Windows.h>
-
-using namespace vr;
+#include <cstdio>
 
 RsCameraDriver::RsCameraDriver()
 {
@@ -19,7 +18,7 @@ vr::EVRInitError RsCameraDriver::Activate(vr::TrackedDeviceIndex_t unObjectId)
     m_unObjectId = unObjectId;
     m_ulPropertyContainer = vr::VRProperties()->TrackedDeviceToPropertyContainer(m_unObjectId);
 
-    vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, Prop_SerialNumber_String, m_sSerialNumber.c_str());
+    vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_SerialNumber_String, m_sSerialNumber.c_str());
     vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_ModelNumber_String, m_sModelNumber.c_str());
 
     // Set icons
@@ -32,12 +31,11 @@ vr::EVRInitError RsCameraDriver::Activate(vr::TrackedDeviceIndex_t unObjectId)
     vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceStandby_String, "{rstracker}realsense_standby.png");
     vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceAlertLow_String, "{rstracker}realsense_ready_low.png");
 
-    return VRInitError_None;
+    return vr::VRInitError_None;
 }
 
 void RsCameraDriver::Deactivate()
 {
-
 }
 
 void RsCameraDriver::EnterStandby()
@@ -57,17 +55,17 @@ void RsCameraDriver::DebugRequest(const char* pchRequest, char* pchResponseBuffe
 
 vr::DriverPose_t RsCameraDriver::GetPose()
 {
-    HmdQuaternion_t quat;
+    vr::HmdQuaternion_t quat;
     quat.w = 1;
     quat.x = 0;
     quat.y = 0;
     quat.z = 0;
 
-    DriverPose_t pose = { 0 };
+    vr::DriverPose_t pose = { 0 };
     // pose.poseIsValid = false;
     pose.poseIsValid = true;
     // pose.result = TrackingResult_Calibrating_OutOfRange;
-    pose.result = TrackingResult_Running_OK;
+    pose.result = vr::TrackingResult_Running_OK;
     pose.deviceIsConnected = true;
 
     pose.qWorldFromDriverRotation = quat;
@@ -83,13 +81,14 @@ vr::DriverPose_t RsCameraDriver::GetPose()
 void RsCameraDriver::RunFrame()
 {
     if (m_unObjectId != vr::k_unTrackedDeviceIndexInvalid) {
-        vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_unObjectId, GetPose(), sizeof(DriverPose_t));
+        vr::VRServerDriverHost()->TrackedDevicePoseUpdated(m_unObjectId, GetPose(), sizeof(vr::DriverPose_t));
     }
+    UpdateKeypoints();
 }
 
 void RsCameraDriver::Cleanup()
 {
-
+    cm_skel_destroy_handle(&handle);
 }
 
 std::string RsCameraDriver::GetSerialNumber()
@@ -161,9 +160,101 @@ void RsCameraDriver::SetupRealsense()
         (int)capturedFrame.step[0], CM_HWC
     };
 
-    CUBEMOS_SKEL_Buffer_Ptr skeletonsPresent = create_skel_buffer();
-    CUBEMOS_SKEL_Buffer_Ptr skeletonsLast = create_skel_buffer();
-
     // Get the skeleton keypoints for the first frame
-    cm_skel_estimate_keypoints(handle, &imageLast, nHeight, skeletonsLast.get());
+    CM_ReturnCode retCodeFirstFrame = cm_skel_estimate_keypoints(handle, &imageLast, nHeight, skeletonsLast.get());
+    if (retCode == CM_SUCCESS) DriverLog("SUCCESS get first skeltal point.\n");
+}
+
+
+CUBEMOS_SKEL_Buffer_Ptr RsCameraDriver::create_skel_buffer()
+{
+    return CUBEMOS_SKEL_Buffer_Ptr(new CM_SKEL_Buffer(), [](CM_SKEL_Buffer* pb) {
+        cm_skel_release_buffer(pb);
+        delete pb;
+    });
+}
+
+void RsCameraDriver::UpdateKeypoints()
+{
+    // capture image
+    rs2::frameset data = pipe.wait_for_frames();
+    rs2::align align_to_color(RS2_STREAM_DEPTH);
+    data = align_to_color.process(data);
+
+    rs2::frame colorFrame = data.get_color_frame();
+    rs2::frame depthFrame = data.get_depth_frame();
+
+    capturedFrame = cv::Mat(
+        cv::Size(colorFrame.as<rs2::video_frame>().get_width(), colorFrame.as<rs2::video_frame>().get_height()),
+        CV_8UC3,
+        (void*)colorFrame.get_data(),
+        cv::Mat::AUTO_STEP);
+
+
+    CM_Image imagePresent = {
+    capturedFrame.data,         CM_UINT8, capturedFrame.cols, capturedFrame.rows, capturedFrame.channels(),
+    (int)capturedFrame.step[0], CM_HWC
+    };
+
+    // Run Skeleton Tracking and display the results
+    CM_ReturnCode retCode = cm_skel_estimate_keypoints(handle, &imagePresent, nHeight, skeletonsPresent.get());
+
+    if (retCode == CM_SUCCESS) {
+        if (skeletonsPresent->numSkeletons > 0) {
+            // Assign tracking ids to the skeletons in the present frame
+            cm_skel_update_tracking_id(handle, skeletonsLast.get(), skeletonsPresent.get());
+
+            const cv::Point2f absentKeypoint(-1.0f, -1.0f);
+            const std::vector<std::pair<int, int>> limbKeypointsIds = { { 1, 2 },   { 1, 5 },   { 2, 3 }, { 3, 4 },  { 5, 6 },
+                                                                    { 6, 7 },   { 1, 8 },   { 8, 9 }, { 9, 10 }, { 1, 11 },
+                                                                    { 11, 12 }, { 12, 13 }, { 1, 0 }, { 0, 14 }, { 14, 16 },
+                                                                    { 0, 15 },  { 15, 17 } };
+
+            // Get the 3d point and render it on the joints
+            CM_SKEL_Buffer* skeletons_buffer = skeletonsLast.get();
+
+            cv::Point2f keyPointHead(skeletons_buffer->skeletons[0].keypoints_coord_x[0],
+                skeletons_buffer->skeletons[0].keypoints_coord_y[0]);
+
+            for (size_t keypointIdx = 0; keypointIdx < skeletons_buffer->skeletons[0].numKeyPoints; keypointIdx++) {
+                const cv::Point2f keyPoint(skeletons_buffer->skeletons[0].keypoints_coord_x[keypointIdx],
+                    skeletons_buffer->skeletons[0].keypoints_coord_y[keypointIdx]);
+                if (keyPoint != absentKeypoint) {
+                    // get the 3d point and render it on the joints
+                    point3d[keypointIdx] = get_skeleton_point_3d(depthFrame, static_cast<int>(keyPoint.x), static_cast<int>(keyPoint.y));
+                    //char buffer[256] = "";
+                    //snprintf(buffer, sizeof(buffer), "%d, %f, %f, %f\n", static_cast<int>(keypointIdx), point3d[13].point3d[0], point3d[13].point3d[1], point3d[13].point3d[2]);
+                    // snprintf(buffer, sizeof(buffer), "%d\n", skeletons_buffer->numSkeletons);
+                    // DriverLog(buffer);
+
+                    // FILE* fp;
+                    // errno_t error;
+                    // error = fopen_s(&fp, "C:\\Users\\kzki\\source\\repos\\RsTracker\\bin\\drivers\\rstracker\\bin\\win64\\smpl.txt", "a");
+                    // if (error == 0) {
+                    //     fprintf(fp, buffer);
+                    //     fclose(fp);
+                    // }
+                }
+            }
+            // Set the present frame as last one to track the next frame
+            skeletonsLast.swap(skeletonsPresent);
+            // Free memory of the latest frame
+            cm_skel_release_buffer(skeletonsPresent.get());
+        }
+    }
+}
+
+
+// cmPoint RsCameraDriver::EstimatePoint3d(const CM_SKEL_Buffer* skeletons_buffer, rs2::depth_frame const& depth_frame, cv::Mat& image)
+// {
+//     const std::vector<std::pair<int, int>> limbKeypointsIds = { { 1, 2 },   { 1, 5 },   { 2, 3 }, { 3, 4 },  { 5, 6 },
+//                                                         { 6, 7 },   { 1, 8 },   { 8, 9 }, { 9, 10 }, { 1, 11 },
+//                                                         { 11, 12 }, { 12, 13 }, { 1, 0 }, { 0, 14 }, { 14, 16 },
+//                                                         { 0, 15 },  { 15, 17 } };
+//     const cv::Point2f absentKeypoint(-1.0f, -1.0f);
+// }
+
+cmPoint RsCameraDriver::GetPoint3d(int i)
+{
+    return point3d[i];
 }

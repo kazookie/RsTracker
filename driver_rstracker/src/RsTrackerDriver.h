@@ -1,16 +1,16 @@
 #include <openvr_driver.h>
+#include "RsCameraDriver.h"
 
 class RsTrackerDriver : public vr::ITrackedDeviceServerDriver
 {
 public:
-    RsTrackerDriver();
+    RsTrackerDriver(RsCameraDriver* rsCamera_Driver, int joint_Num, std::string deviceName);
     virtual vr::EVRInitError Activate(vr::TrackedDeviceIndex_t unObjectId) override;
     virtual void Deactivate() override;
     virtual void EnterStandby() override;
     virtual void* GetComponent(const char* pchComponentNameAndVersion) override;
     virtual void DebugRequest(const char* pchRequest, char* pchResponseBuffer, uint32_t unResponseBufferSize) override;
     virtual vr::DriverPose_t GetPose() override;
-
 
     void RunFrame();
     void Cleanup();
@@ -23,5 +23,10 @@ private:
     std::string m_sSerialNumber;
     std::string m_sModelNumber;
 
+    std::string device_name;
+
     double cpX = 0, cpY = 0, cpZ = 0;
+
+    int jointNum = 0;
+    RsCameraDriver* rsCameraDriver;
 };

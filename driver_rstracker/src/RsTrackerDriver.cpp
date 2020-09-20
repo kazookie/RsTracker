@@ -1,15 +1,21 @@
 #include "RsTrackerDriver.h"
 #include <Windows.h>
+#include <cstdio>
 
 using namespace vr;
 
-RsTrackerDriver::RsTrackerDriver()
+RsTrackerDriver::RsTrackerDriver(RsCameraDriver* rsCamera_Driver, int joint_Num, std::string deviceName)
 {
     m_unObjectId = vr::k_unTrackedDeviceIndexInvalid;
     m_ulPropertyContainer = vr::k_ulInvalidPropertyContainer;
 
     m_sSerialNumber = "841512070493";
     m_sModelNumber = "EmuTracker";
+
+    rsCameraDriver = rsCamera_Driver;
+    jointNum = joint_Num;
+
+    device_name = deviceName;
 }
 
 vr::EVRInitError RsTrackerDriver::Activate(vr::TrackedDeviceIndex_t unObjectId)
@@ -64,33 +70,14 @@ vr::DriverPose_t RsTrackerDriver::GetPose()
     pose.qWorldFromDriverRotation = quat;
     pose.qDriverFromHeadRotation = quat;
 
-    if ((GetAsyncKeyState(87) & 0x8000) != 0) {
-        cpZ += -0.01;                                       //W
+    cmPoint point3d = rsCameraDriver->GetPoint3d(jointNum);
+    
+    
+    if ((double)point3d.point3d[2] > 0.5){
+        pose.vecPosition[0] = (double)point3d.point3d[0] * -1;
+        pose.vecPosition[1] = (double)point3d.point3d[1] * -1 + 0.7;
+        pose.vecPosition[2] = (double)point3d.point3d[2] - 2.0;
     }
-    if ((GetAsyncKeyState(83) & 0x8000) != 0) {
-        cpZ += 0.01;                                       //S
-    }
-    if ((GetAsyncKeyState(65) & 0x8000) != 0) {
-        cpX += -0.01;                                       //A
-    }
-    if ((GetAsyncKeyState(68) & 0x8000) != 0) {
-        cpX += 0.01;                                       //D
-    }
-    if ((GetAsyncKeyState(81) & 0x8000) != 0) {
-        cpY += 0.01;                                       //Q
-    }
-    if ((GetAsyncKeyState(69) & 0x8000) != 0) {
-        cpY += -0.01;                                       //E
-    }
-    if ((GetAsyncKeyState(82) & 0x8000) != 0) {
-        cpX = 0;                                            //R
-        cpY = 0;
-        cpZ = 0;
-    }
-
-    pose.vecPosition[0] = cpX;
-    pose.vecPosition[1] = cpY;
-    pose.vecPosition[2] = cpZ;
 
     return pose;
 }
@@ -109,5 +96,5 @@ void RsTrackerDriver::Cleanup()
 
 std::string RsTrackerDriver::GetSerialNumber()
 {
-    return "841512070493_Tracker_foot";
+    return "841512070493_Tracker_" + device_name;
 }

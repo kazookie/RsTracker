@@ -9,47 +9,9 @@
 #include <cubemos/engine.h>
 #include <cubemos/skeleton_tracking.h>
 
-using CUBEMOS_SKEL_Buffer_Ptr = std::unique_ptr<CM_SKEL_Buffer, void (*)(CM_SKEL_Buffer*)>;
+#pragma once
 
-CUBEMOS_SKEL_Buffer_Ptr create_skel_buffer()
-{
-    return CUBEMOS_SKEL_Buffer_Ptr(new CM_SKEL_Buffer(), [](CM_SKEL_Buffer* pb) {
-        cm_skel_release_buffer(pb);
-        delete pb;
-    });
-}
-
-static std::string get_localdata_path()
-{
-    const int size = 256;
-    char buf[size] = "";
-    size_t requiredSize;
-
-    getenv_s(&requiredSize, buf, size, "LOCALAPPDATA");
-    return std::string(buf);
-}
-
-static std::string default_log_dir()
-{
-    std::string cubemosLogDir = "";
-    cubemosLogDir = get_localdata_path() + "\\Cubemos\\SkeletonTracking\\logs";
-    return cubemosLogDir;
-}
-
-static std::string default_license_dir()
-{
-    std::string cubemosLicenseDir = "";
-    cubemosLicenseDir = get_localdata_path() + "\\Cubemos\\SkeletonTracking\\license";
-    return cubemosLicenseDir;
-}
-
-static std::string default_model_dir()
-{
-    std::string cubemosModelDir = "";
-    cubemosModelDir = get_localdata_path() + "\\Cubemos\\SkeletonTracking\\models";
-    return cubemosModelDir;
-}
-
+using CUBEMOS_SKEL_Buffer_Ptr = std::unique_ptr <CM_SKEL_Buffer, void (*)(CM_SKEL_Buffer*)>;
 
 struct cmPoint {
     float color_pixel[2];
@@ -75,6 +37,44 @@ public:
     std::string GetSerialNumber();
 
     cmPoint get_skeleton_point_3d(rs2::depth_frame const& depthFrame, int x, int y);
+
+    void UpdateKeypoints();
+
+    cmPoint GetPoint3d(int i);
+    CUBEMOS_SKEL_Buffer_Ptr create_skel_buffer();
+
+    // cmPoint EstimatePoint3d(const CM_SKEL_Buffer* skeletons_buffer, rs2::depth_frame const& depth_frame, cv::Mat& image);
+
+    std::string get_localdata_path()
+    {
+        const int size = 256;
+        char buf[size] = "";
+        size_t requiredSize;
+
+        getenv_s(&requiredSize, buf, size, "LOCALAPPDATA");
+        return std::string(buf);
+    }
+
+    std::string default_log_dir()
+    {
+        std::string cubemosLogDir = "";
+        cubemosLogDir = get_localdata_path() + "\\Cubemos\\SkeletonTracking\\logs";
+        return cubemosLogDir;
+    }
+
+    std::string default_license_dir()
+    {
+        std::string cubemosLicenseDir = "";
+        cubemosLicenseDir = get_localdata_path() + "\\Cubemos\\SkeletonTracking\\license";
+        return cubemosLicenseDir;
+    }
+
+    std::string default_model_dir()
+    {
+        std::string cubemosModelDir = "";
+        cubemosModelDir = get_localdata_path() + "\\Cubemos\\SkeletonTracking\\models";
+        return cubemosModelDir;
+    }
 private:
     vr::TrackedDeviceIndex_t m_unObjectId;
     vr::PropertyContainerHandle_t m_ulPropertyContainer;
@@ -97,8 +97,11 @@ private:
     cv::Mat capturedFrame;
     const int nHeight = 192; // height of the image with which the DNN model will run inference
 
-    CUBEMOS_SKEL_Buffer_Ptr skeletonsPresent;
-    CUBEMOS_SKEL_Buffer_Ptr skeletonsLast;
+    CUBEMOS_SKEL_Buffer_Ptr skeletonsPresent = create_skel_buffer();
+    CUBEMOS_SKEL_Buffer_Ptr skeletonsLast = create_skel_buffer();
+
+    cmPoint point3d[18];
+
 
     void SetupRealsense();
 };

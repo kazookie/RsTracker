@@ -1,8 +1,6 @@
 #include "ServerDriver.h"
 
-using namespace vr;
-
-EVRInitError ServerDriver::Init(vr::IVRDriverContext* pDriverContext)
+vr::EVRInitError ServerDriver::Init(vr::IVRDriverContext* pDriverContext)
 {
     VR_INIT_SERVER_DRIVER_CONTEXT(pDriverContext);
     InitDriverLog(vr::VRDriverLog());
@@ -10,13 +8,13 @@ EVRInitError ServerDriver::Init(vr::IVRDriverContext* pDriverContext)
     m_pRsCamera = new RsCameraDriver();
     vr::VRServerDriverHost()->TrackedDeviceAdded(m_pRsCamera->GetSerialNumber().c_str(), vr::TrackedDeviceClass_TrackingReference, m_pRsCamera);
 
-    m_pTracker_foot_left = new RsTrackerDriver();
+    m_pTracker_foot_left = new RsTrackerDriver(m_pRsCamera, 13, "left");
     vr::VRServerDriverHost()->TrackedDeviceAdded(m_pTracker_foot_left->GetSerialNumber().c_str(), vr::TrackedDeviceClass_GenericTracker, m_pTracker_foot_left);
 
-    //m_pTracker_foot_right = new EmuTrackerDriver();
-    //vr::VRServerDriverHost()->TrackedDeviceAdded(m_pTracker_foot_right->GetSerialNumber().c_str(), vr::TrackedDeviceClass_GenericTracker, m_pTracker_foot_right);
+    m_pTracker_foot_right = new RsTrackerDriver(m_pRsCamera, 10, "right");
+    vr::VRServerDriverHost()->TrackedDeviceAdded(m_pTracker_foot_right->GetSerialNumber().c_str(), vr::TrackedDeviceClass_GenericTracker, m_pTracker_foot_right);
 
-    return VRInitError_None;
+    return vr::VRInitError_None;
 }
 
 void ServerDriver::RunFrame()
