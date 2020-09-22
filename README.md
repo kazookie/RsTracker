@@ -1,9 +1,11 @@
 [English](https://github.com/kazookie/RsTracker/blob/master/README.md),
-[日本語](https://github.com/kazookie/RsTracker/blob/master/README.ja.md) 
+[日本語](https://github.com/kazookie/RsTracker/blob/master/README.ja.md)
 # RsTracker
 
 RsTracker is OpenVR Driver for Intel RealSense depth cameras.  
 Using Skeleton Tracking SDK, assign joints to virtual tracker.
+
+![SteamVR_view](https://raw.githubusercontent.com/kazookie/RsTracker/master/docs/img/SteamVR_view.jpg)
 
 ## Dependencies
 - [OpenVR](https://github.com/ValveSoftware/openvr)

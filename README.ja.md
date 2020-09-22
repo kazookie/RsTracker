@@ -1,6 +1,9 @@
 # RsTracker
 
-Intel RealSenseをSteamVRに仮想トラッカーとして認識させるためのドライバーです。
+Intel RealSenseをSteamVRで利用するためのドライバーです。  
+Skeleton Tracking SDKで関節の推定を行いトラッカーとして割り当てます。
+
+![SteamVR_view](https://raw.githubusercontent.com/kazookie/RsTracker/master/docs/img/SteamVR_view.jpg)
 
 ## 依存ライブラリなど
 - [OpenVR](https://github.com/ValveSoftware/openvr)
