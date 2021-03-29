@@ -435,3 +435,4 @@ $RECYCLE.BIN/
 ## RsTracker
 bin/drivers/rstracker/bin/win32/
 bin/drivers/rstracker/bin/win64/
+lib/opencv/*
