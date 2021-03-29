@@ -114,9 +114,21 @@ cmPoint RsCameraDriver::get_skeleton_point_3d(rs2::depth_frame const& depthFrame
 
 void RsCameraDriver::SetupRealsense()
 {
-    cfg.enable_stream(RS2_STREAM_COLOR, -1, 1280, 720, RS2_FORMAT_BGR8, 30);
-    cfg.enable_stream(RS2_STREAM_DEPTH, -1, 1280, 720, RS2_FORMAT_ANY, 30);
-    rs2::align align_to_color(RS2_STREAM_DEPTH);
+    cfg.enable_stream(RS2_STREAM_COLOR, -1, 640, 480, RS2_FORMAT_BGR8, 60);
+    cfg.enable_stream(RS2_STREAM_DEPTH, -1, 640, 480, RS2_FORMAT_ANY, 60);
+
+    // Filter settings
+    dec_filter.set_option(RS2_OPTION_FILTER_MAGNITUDE, 3);
+    depth_to_disparity = rs2::disparity_transform(true);
+    disparity_to_depth = rs2::disparity_transform(false);
+    spat_filter.set_option(RS2_OPTION_FILTER_MAGNITUDE, 2);
+    spat_filter.set_option(RS2_OPTION_FILTER_SMOOTH_ALPHA, 0.5);
+    spat_filter.set_option(RS2_OPTION_FILTER_SMOOTH_DELTA, 20);
+    spat_filter.set_option(RS2_OPTION_HOLES_FILL, 0);
+    temp_filter.set_option(RS2_OPTION_FILTER_SMOOTH_ALPHA, 0.4);
+    temp_filter.set_option(RS2_OPTION_FILTER_SMOOTH_DELTA, 20);
+    temp_filter.set_option(RS2_OPTION_HOLES_FILL, 3);
+    hf_filter.set_option(RS2_OPTION_HOLES_FILL, 1);
 
     profile = pipe.start(cfg);
     
@@ -178,11 +190,18 @@ void RsCameraDriver::UpdateKeypoints()
 {
     // capture image
     rs2::frameset data = pipe.wait_for_frames();
-    rs2::align align_to_color(RS2_STREAM_DEPTH);
     data = align_to_color.process(data);
 
     rs2::frame colorFrame = data.get_color_frame();
     rs2::frame depthFrame = data.get_depth_frame();
+
+    // filter
+    // depthFrame = dec_filter.process(depthFrame);
+    depthFrame = depth_to_disparity.process(depthFrame);
+    depthFrame = spat_filter.process(depthFrame);
+    depthFrame = temp_filter.process(depthFrame);
+    depthFrame = disparity_to_depth.process(depthFrame);
+    depthFrame = hf_filter.process(depthFrame);
 
     capturedFrame = cv::Mat(
         cv::Size(colorFrame.as<rs2::video_frame>().get_width(), colorFrame.as<rs2::video_frame>().get_height()),

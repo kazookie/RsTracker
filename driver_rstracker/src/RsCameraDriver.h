@@ -90,6 +90,7 @@ private:
     rs2::context ctx;
     rs2::pipeline_profile profile;
     rs2::device sensor;
+    rs2::align align_to_color = rs2::align(RS2_STREAM_DEPTH);
 
     // Cubemos
     CM_SKEL_Handle* handle = nullptr;   // set up the cubemos skeleton tracking api pipeline
@@ -102,6 +103,13 @@ private:
 
     cmPoint point3d[18];
 
+    // RealSence filter
+    rs2::decimation_filter dec_filter;
+    rs2::disparity_transform depth_to_disparity;
+    rs2::disparity_transform disparity_to_depth;
+    rs2::spatial_filter spat_filter;
+    rs2::temporal_filter temp_filter;
+    rs2::hole_filling_filter hf_filter;
 
     void SetupRealsense();
 };

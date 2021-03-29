@@ -25,8 +25,15 @@ private:
 
     std::string device_name;
 
+
     double cpX = 0, cpY = 0, cpZ = 0;
+    const static int bufsize = 2;
+    double xb[bufsize]{ 0 };
+    double yb[bufsize]{ 0 };
+    double zb[bufsize]{ 0 };
+    double factor = 0.7;
 
     int jointNum = 0;
     RsCameraDriver* rsCameraDriver;
+
 };

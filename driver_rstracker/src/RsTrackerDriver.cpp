@@ -1,6 +1,7 @@
 #include "RsTrackerDriver.h"
 #include <Windows.h>
 #include <cstdio>
+#include <cmath>
 
 using namespace vr;
 
@@ -74,11 +75,56 @@ vr::DriverPose_t RsTrackerDriver::GetPose()
     
     
     if ((double)point3d.point3d[2] > 0.5){
-        pose.vecPosition[0] = (double)point3d.point3d[0] * -1;
-        pose.vecPosition[1] = (double)point3d.point3d[1] * -1 + 0.7;
-        pose.vecPosition[2] = (double)point3d.point3d[2] - 2.0;
-    }
 
+        double x_raw = (double)point3d.point3d[0];
+        double y_raw = (double)point3d.point3d[1];
+        double z_raw = (double)point3d.point3d[2];
+
+
+        if (x_raw != -1 && y_raw != -1 && x_raw != 0) {
+
+            double x = x_raw * -1;
+            double y = y_raw * -1 + 0.68;
+            double z = z_raw - 2.0;
+
+            // check spike
+            double x_diff = std::abs(x) - std::abs(xb[bufsize - 2]);
+            double y_diff = std::abs(y) - std::abs(yb[bufsize - 2]);
+
+            double x_lpf = factor * xb[bufsize - 2] + (1 - factor) * x;
+            double y_lpf = factor * yb[bufsize - 2] + (1 - factor) * y;
+            double z_lpf = factor * zb[bufsize - 2] + (1 - factor) * z;
+
+
+            // calc sma
+            for (int i = 0; i < bufsize - 1; i++) {
+                xb[i] = xb[i + 1];
+                yb[i] = yb[i + 1];
+                zb[i] = zb[i + 1];
+            }
+            xb[bufsize - 1] = x_lpf;
+            yb[bufsize - 1] = y_lpf;
+            zb[bufsize - 1] = z_lpf;
+
+            pose.vecPosition[0] = x_lpf;
+            pose.vecPosition[1] = y_lpf;
+            pose.vecPosition[2] = z_lpf;
+            return pose;
+        }
+    }
+//    double sum_x = 0, sum_y = 0, sum_z = 0;
+//    for (int i = 0; i < bufsize; i++) {
+//        sum_x += xb[i];
+//        sum_y += yb[i];
+//        sum_z += zb[i];
+//    }
+//    double ave_x = sum_x / bufsize;
+//    double ave_y = sum_y / bufsize;
+//    double ave_z = sum_z / bufsize;
+
+    pose.vecPosition[0] = xb[bufsize - 1];
+    pose.vecPosition[1] = yb[bufsize - 1];
+    pose.vecPosition[2] = zb[bufsize - 1];
     return pose;
 }
 
